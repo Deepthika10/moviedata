@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Movie Timeline</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1 class="header-title">🎬 Family Movie Night</h1>
+            <p>What have we been watching? Add your ratings below!</p>
+        </header>
+
+        <article>
+            <h3 aria-busy="true">Add a New Movie</h3>
+            <div class="grid">
+                <input type="text" id="nameInput" placeholder="Your Name" aria-label="Your Name">
+                <input type="text" id="movieInput" placeholder="Movie Title" aria-label="Movie Title">
+            </div>
+            <select id="ratingInput" aria-label="Rating">
+                <option value="" disabled selected>Select your rating</option>
+                <option value="5">★★★★★ - Masterpiece!</option>
+                <option value="4">★★★★☆ - Great Watch</option>
+                <option value="3">★★★☆☆ - Solid</option>
+                <option value="2">★★☆☆☆ - Kinda Meh</option>
+                <option value="1">★☆☆☆☆ - Not for me</option>
+            </select>
+            <button onclick="addMovie()">Add to Timeline</button>
+        </article>
+
+        <section>
+            <h2>Our Timeline</h2>
+            <div class="grid">
+                <div>
+                    <label for="nameFilter">Filter by Name:</label>
+                    <select id="nameFilter" onchange="filterTimeline()">
+                        <option value="all">All</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="ratingFilter">Filter by Rating:</label>
+                    <select id="ratingFilter" onchange="filterTimeline()">
+                        <option value="all">All</option>
+                        <option value="5">★★★★★</option>
+                        <option value="4">★★★★☆</option>
+                        <option value="3">★★★☆☆</option>
+                        <option value="2">★★☆☆☆</option>
+                        <option value="1">★☆☆☆☆</option>
+                    </select>
+                </div>
+            </div>
+            <div id="timeline">
+                <p>No movies added yet. Be the first!</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <small>Made with ❤️ for the family.</small>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
