@@ -3,6 +3,7 @@
 const SUPABASE_URL = 'https://zwboslsunhrynvgrqtav.supabase.co'; // e.g., https://your-project-ref.supabase.co
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3Ym9zbHN1bmhyeW52Z3JxdGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMTE4NTEsImV4cCI6MjA2NDc4Nzg1MX0.0UopuPQCkHxE-uQArN78lcV1ead4pc1sTIe5lkWyD4w'; // e.g., eyJhbGciOiJIUzI1Ni...
 
+// THIS LINE IS WHERE Supabase.createClient IS CALLED
 const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Global variable to hold movies once fetched and for filtering
@@ -62,6 +63,7 @@ async function fetchMovies() {
  * Adds a new movie entry to the Supabase database.
  */
 async function addMovie() {
+    console.log('addMovie function called.');
     const nameInputSelect = document.getElementById('nameInput'); // This is now the select element
     const otherNameInput = document.getElementById('otherNameInput'); // The input for "OTHERS"
     const movieInput = document.getElementById('movieInput');
@@ -78,26 +80,33 @@ async function addMovie() {
     const rating = parseInt(ratingInput.value); // Ensure rating is an integer
     const review = reviewInput.value.trim(); // Get the review text
 
+    console.log('Input values:', { name, movie_title, rating, review });
+
     // Basic validation
     if (!name || !movie_title || isNaN(rating) || rating < 1 || rating > 5) {
-        alert('Please ensure your name, movie title, and a valid rating are provided.');
+        let errorMessage = 'Please ensure:';
+        if (!name) errorMessage += '\n- Your name is selected or entered.';
+        if (!movie_title) errorMessage += '\n- A movie title is provided.';
+        if (isNaN(rating) || rating < 1 || rating > 5) errorMessage += '\n- A valid rating is selected (1-5).';
+        alert(errorMessage);
+        console.warn('Validation failed:', errorMessage);
         return;
     }
 
-    console.log('Adding movie:', { name, movie_title, rating, review });
-    const { data, error } = await supabase
+    console.log('Validation passed. Attempting to insert into Supabase...');
+    const { data, error } = await supabase // Accessing 'supabase' here
         .from('movies')
         .insert([
             { name, movie_title, rating, review } // Include the new 'review' field
         ]);
 
     if (error) {
-        console.error('Error adding movie:', error.message);
-        alert('Failed to add movie. Please try again.');
+        console.error('Error adding movie to Supabase:', error.message, error.details, error.hint, error.code);
+        alert(`Failed to add movie: ${error.message}. Please check your Supabase rules and console for details.`);
         return;
     }
 
-    console.log('Movie added successfully:', data);
+    console.log('Movie added successfully to Supabase:', data);
     // Real-time listener will handle re-rendering, no need to call fetchMovies() here.
 
     // Clear input fields and reset dropdowns
@@ -109,6 +118,7 @@ async function addMovie() {
     ratingInput.value = ''; // Clears the value
     ratingInput.selectedIndex = 0; // Resets select to default option
     reviewInput.value = ''; // Clear review text
+    console.log('Input fields cleared.');
 }
 
 /**
@@ -116,7 +126,7 @@ async function addMovie() {
  * Any insert, update, or delete will trigger a re-fetch.
  */
 function setupRealtimeListener() {
-    supabase
+    supabase // Accessing 'supabase' here
         .channel('public:movies') // Listen to changes in the 'movies' table
         .on(
             'postgres_changes',
@@ -140,7 +150,7 @@ async function deleteMovie(id) {
     // Use a custom modal for confirmation instead of alert/confirm
     showConfirmationModal('Are you sure you want to delete this movie entry?', async () => {
         console.log('Attempting to delete movie with ID:', id);
-        const { error } = await supabase
+        const { error } = await supabase // Accessing 'supabase' here
             .from('movies')
             .delete()
             .eq('id', id); // Delete where the 'id' column matches the provided ID
