@@ -182,6 +182,7 @@ section label {
     border-radius: 10px;
     box-shadow: 0 4px 12px var(--shadow-light);
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    position: relative; /* Added for delete button positioning */
 }
 
 .timeline-item:hover {
@@ -222,6 +223,36 @@ section label {
 .timeline-item strong {
     color: var(--primary-custom); /* Emphasize the name */
 }
+
+/* Delete Button Styling */
+.delete-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e74c3c; /* Red color for delete */
+    background-color: #fff;
+    border: 1px solid #e74c3c;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    width: auto; /* Override general button width */
+}
+
+.delete-button:hover {
+    background-color: #e74c3c;
+    color: #fff;
+    border-color: #c0392b;
+    transform: translateY(-1px);
+}
+
+.delete-button:active {
+    transform: translateY(0);
+}
+
 
 /* Footer Styling */
 footer {
@@ -289,5 +320,11 @@ footer {
 
     .timeline-item h4 {
         font-size: 1.4rem;
+    }
+
+    .delete-button {
+        position: static; /* Stack on smaller screens */
+        margin-top: 10px;
+        width: 100%;
     }
 }
