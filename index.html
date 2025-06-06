@@ -17,7 +17,6 @@
         <article>
             <h3>Add a New Movie</h3>
             <div class="grid">
-                <!-- Name Dropdown -->
                 <select id="nameInput" aria-label="Your Name" onchange="handleNameChange()">
                     <option value="" disabled selected>Select your name</option>
                     <option value="DT">DT</option>
@@ -27,14 +26,11 @@
                     <option value="AA">AA</option>
                     <option value="OTHERS">OTHERS</option>
                 </select>
-                <!-- Text field for "OTHERS" - initially hidden -->
                 <div id="otherNameContainer" style="display: none;">
                     <input type="text" id="otherNameInput" placeholder="Enter other name" aria-label="Other Name">
                 </div>
-                <!-- Movie Title Input -->
                 <input type="text" id="movieInput" placeholder="Movie Title" aria-label="Movie Title">
             </div>
-            <!-- Rating Dropdown -->
             <select id="ratingInput" aria-label="Rating">
                 <option value="" disabled selected>Select your rating</option>
                 <option value="5">★★★★★ - Masterpiece!</option>
@@ -43,9 +39,8 @@
                 <option value="2">★★☆☆☆ - Kinda Meh</option>
                 <option value="1">★☆☆☆☆ - Not for me</option>
             </select>
-            <!-- Review Textarea -->
             <textarea id="reviewInput" placeholder="Write your review here (optional)..." aria-label="Movie Review" rows="4"></textarea>
-            
+
             <button onclick="addMovie()">Add to Timeline</button>
         </article>
 
@@ -82,9 +77,8 @@
         </div>
     </footer>
 
-    <!-- Supabase SDK - THIS LINE IS CRUCIAL! -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
     <script src="script.js"></script>
 </body>
 </html>
