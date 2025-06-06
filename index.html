@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Family Movie Timeline</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="stylesheet" href="[https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css](https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css)">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,11 +15,26 @@
         </header>
 
         <article>
-            <h3 aria-busy="true">Add a New Movie</h3>
+            <h3>Add a New Movie</h3>
             <div class="grid">
-                <input type="text" id="nameInput" placeholder="Your Name" aria-label="Your Name">
+                <!-- Name Dropdown -->
+                <select id="nameInput" aria-label="Your Name" onchange="handleNameChange()">
+                    <option value="" disabled selected>Select your name</option>
+                    <option value="DT">DT</option>
+                    <option value="JK">JK</option>
+                    <option value="TPR">TPR</option>
+                    <option value="TP">TP</option>
+                    <option value="AA">AA</option>
+                    <option value="OTHERS">OTHERS</option>
+                </select>
+                <!-- Text field for "OTHERS" - initially hidden -->
+                <div id="otherNameContainer" style="display: none;">
+                    <input type="text" id="otherNameInput" placeholder="Enter other name" aria-label="Other Name">
+                </div>
+                <!-- Movie Title Input -->
                 <input type="text" id="movieInput" placeholder="Movie Title" aria-label="Movie Title">
             </div>
+            <!-- Rating Dropdown -->
             <select id="ratingInput" aria-label="Rating">
                 <option value="" disabled selected>Select your rating</option>
                 <option value="5">★★★★★ - Masterpiece!</option>
@@ -28,6 +43,9 @@
                 <option value="2">★★☆☆☆ - Kinda Meh</option>
                 <option value="1">★☆☆☆☆ - Not for me</option>
             </select>
+            <!-- Review Textarea -->
+            <textarea id="reviewInput" placeholder="Write your review here (optional)..." aria-label="Movie Review" rows="4"></textarea>
+            
             <button onclick="addMovie()">Add to Timeline</button>
         </article>
 
@@ -64,7 +82,8 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase SDK - Add this before your script.js -->
+    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
     
     <script src="script.js"></script>
 </body>
