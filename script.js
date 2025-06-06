@@ -132,6 +132,99 @@ function setupRealtimeListener() {
     console.log('Supabase real-time listener set up.');
 }
 
+/**
+ * Deletes a movie entry from the Supabase database.
+ * @param {string} id - The unique ID of the movie to delete.
+ */
+async function deleteMovie(id) {
+    // Use a custom modal for confirmation instead of alert/confirm
+    showConfirmationModal('Are you sure you want to delete this movie entry?', async () => {
+        console.log('Attempting to delete movie with ID:', id);
+        const { error } = await supabase
+            .from('movies')
+            .delete()
+            .eq('id', id); // Delete where the 'id' column matches the provided ID
+
+        if (error) {
+            console.error('Error deleting movie:', error.message);
+            alert('Failed to delete movie. Please try again.'); // Using alert for simplicity here, but a custom modal is better
+        } else {
+            console.log('Movie deleted successfully:', id);
+            // Real-time listener will handle re-rendering.
+        }
+    });
+}
+
+// --- Custom Modal for Confirmation (replaces confirm()) ---
+// This is a basic implementation. For a more robust solution, you'd create
+// dedicated HTML/CSS for the modal.
+function showConfirmationModal(message, onConfirm) {
+    // Check if a modal already exists to prevent duplicates
+    if (document.getElementById('customConfirmationModal')) {
+        return;
+    }
+
+    const modalOverlay = document.createElement('div');
+    modalOverlay.id = 'customConfirmationModal';
+    modalOverlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.6); display: flex;
+        justify-content: center; align-items: center; z-index: 1000;
+    `;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background-color: white; padding: 25px; border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;
+        max-width: 400px; width: 90%;
+    `;
+
+    const messagePara = document.createElement('p');
+    messagePara.textContent = message;
+    messagePara.style.marginBottom = '20px';
+    messagePara.style.fontSize = '1.1rem';
+    messagePara.style.color = '#333';
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.justifyContent = 'space-around';
+    buttonContainer.style.gap = '10px';
+
+    const confirmButton = document.createElement('button');
+    confirmButton.textContent = 'Yes, Delete';
+    confirmButton.style.cssText = `
+        background-color: #e74c3c; color: white; border: none;
+        padding: 10px 15px; border-radius: 5px; cursor: pointer;
+        font-size: 0.95rem; flex-grow: 1;
+    `;
+    confirmButton.onmouseover = () => confirmButton.style.backgroundColor = '#c0392b';
+    confirmButton.onmouseout = () => confirmButton.style.backgroundColor = '#e74c3c';
+    confirmButton.onclick = () => {
+        onConfirm();
+        document.body.removeChild(modalOverlay);
+    };
+
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.style.cssText = `
+        background-color: #7f8c8d; color: white; border: none;
+        padding: 10px 15px; border-radius: 5px; cursor: pointer;
+        font-size: 0.95rem; flex-grow: 1;
+    `;
+    cancelButton.onmouseover = () => cancelButton.style.backgroundColor = '#6c7a89';
+    cancelButton.onmouseout = () => cancelButton.style.backgroundColor = '#7f8c8d';
+    cancelButton.onclick = () => {
+        document.body.removeChild(modalOverlay);
+    };
+
+    buttonContainer.appendChild(confirmButton);
+    buttonContainer.appendChild(cancelButton);
+    modalContent.appendChild(messagePara);
+    modalContent.appendChild(buttonContainer);
+    modalOverlay.appendChild(modalContent);
+    document.body.appendChild(modalOverlay);
+}
+
 
 // --- Rendering and Filtering Functions ---
 
@@ -168,8 +261,9 @@ function renderTimeline() {
         timelineItem.innerHTML = `
             <h4>${movie.movie_title}</h4>
             <p>${ratingStars}</p>
-            ${movie.review ? `<p><em>Review:</em> ${movie.review}</p>` : ''} <!-- Display review if it exists -->
+            ${movie.review ? `<p><em>Review:</em> ${movie.review}</p>` : ''}
             <small class="meta">Rated by <strong>${movie.name}</strong> on ${formattedDate}</small>
+            <button class="delete-button" onclick="deleteMovie('${movie.id}')">Delete</button>
         `;
         timelineContainer.appendChild(timelineItem);
     });
