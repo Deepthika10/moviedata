@@ -16,6 +16,24 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchMovies();
 });
 
+// --- New Function to Handle Name Dropdown Change ---
+/**
+ * Shows/hides the "other name" input field based on the selected name.
+ */
+function handleNameChange() {
+    const nameInput = document.getElementById('nameInput');
+    const otherNameContainer = document.getElementById('otherNameContainer');
+    const otherNameInput = document.getElementById('otherNameInput');
+
+    if (nameInput.value === 'OTHERS') {
+        otherNameContainer.style.display = 'block'; // Show the text field
+        otherNameInput.focus(); // Focus on it for immediate typing
+    } else {
+        otherNameContainer.style.display = 'none'; // Hide the text field
+        otherNameInput.value = ''; // Clear its value when hidden
+    }
+}
+
 // --- Supabase Data Operations ---
 
 /**
@@ -25,7 +43,7 @@ async function fetchMovies() {
     console.log('Fetching movies from Supabase...');
     const { data, error } = await supabase
         .from('movies')
-        .select('*') // Select all columns
+        .select('*') // Select all columns (including the new 'review')
         .order('created_at', { ascending: false }); // Order by newest first
 
     if (error) {
@@ -44,40 +62,53 @@ async function fetchMovies() {
  * Adds a new movie entry to the Supabase database.
  */
 async function addMovie() {
-    const nameInput = document.getElementById('nameInput');
+    const nameInputSelect = document.getElementById('nameInput'); // This is now the select element
+    const otherNameInput = document.getElementById('otherNameInput'); // The input for "OTHERS"
     const movieInput = document.getElementById('movieInput');
     const ratingInput = document.getElementById('ratingInput');
+    const reviewInput = document.getElementById('reviewInput'); // New review input
 
-    const name = nameInput.value.trim();
+    let name = nameInputSelect.value;
+    // If "OTHERS" is selected, use the text from the otherNameInput
+    if (name === 'OTHERS') {
+        name = otherNameInput.value.trim();
+    }
+    
     const movie_title = movieInput.value.trim(); // Match database column name
     const rating = parseInt(ratingInput.value); // Ensure rating is an integer
+    const review = reviewInput.value.trim(); // Get the review text
 
-    if (name && movie_title && !isNaN(rating) && rating >= 1 && rating <= 5) {
-        console.log('Adding movie:', { name, movie_title, rating });
-        const { data, error } = await supabase
-            .from('movies')
-            .insert([
-                { name, movie_title, rating } // created_at will be automatically set by DB
-            ]);
-
-        if (error) {
-            console.error('Error adding movie:', error.message);
-            alert('Failed to add movie. Please try again.');
-            return;
-        }
-
-        console.log('Movie added successfully:', data);
-        // No need to manually call renderTimeline() or fetchMovies() here,
-        // as the real-time listener will pick up the change and re-render.
-
-        // Clear input fields
-        nameInput.value = '';
-        movieInput.value = '';
-        ratingInput.value = ''; // Clears the value
-        ratingInput.selectedIndex = 0; // Resets select to default option
-    } else {
-        alert('Please fill in all fields correctly (Your Name, Movie Title, and select a Rating from 1-5).');
+    // Basic validation
+    if (!name || !movie_title || isNaN(rating) || rating < 1 || rating > 5) {
+        alert('Please ensure your name, movie title, and a valid rating are provided.');
+        return;
     }
+
+    console.log('Adding movie:', { name, movie_title, rating, review });
+    const { data, error } = await supabase
+        .from('movies')
+        .insert([
+            { name, movie_title, rating, review } // Include the new 'review' field
+        ]);
+
+    if (error) {
+        console.error('Error adding movie:', error.message);
+        alert('Failed to add movie. Please try again.');
+        return;
+    }
+
+    console.log('Movie added successfully:', data);
+    // Real-time listener will handle re-rendering, no need to call fetchMovies() here.
+
+    // Clear input fields and reset dropdowns
+    nameInputSelect.value = ''; // Reset name dropdown
+    nameInputSelect.selectedIndex = 0; // Ensures "Select your name" is shown
+    otherNameInput.value = ''; // Clear "OTHERS" input
+    document.getElementById('otherNameContainer').style.display = 'none'; // Hide "OTHERS" input
+    movieInput.value = '';
+    ratingInput.value = ''; // Clears the value
+    ratingInput.selectedIndex = 0; // Resets select to default option
+    reviewInput.value = ''; // Clear review text
 }
 
 /**
@@ -102,7 +133,7 @@ function setupRealtimeListener() {
 }
 
 
-// --- Rendering and Filtering Functions (Mostly unchanged, but uses allMovies) ---
+// --- Rendering and Filtering Functions ---
 
 function renderTimeline() {
     const timelineContainer = document.getElementById('timeline');
@@ -132,19 +163,22 @@ function renderTimeline() {
         timelineItem.classList.add('timeline-item');
 
         const ratingStars = '★'.repeat(movie.rating) + '☆'.repeat(5 - movie.rating);
-        // Check if created_at exists before formatting (for older entries if any)
         const formattedDate = movie.created_at ? new Date(movie.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown Date';
-
 
         timelineItem.innerHTML = `
             <h4>${movie.movie_title}</h4>
             <p>${ratingStars}</p>
+            ${movie.review ? `<p><em>Review:</em> ${movie.review}</p>` : ''} <!-- Display review if it exists -->
             <small class="meta">Rated by <strong>${movie.name}</strong> on ${formattedDate}</small>
         `;
         timelineContainer.appendChild(timelineItem);
     });
 }
 
+/**
+ * Populates the name filter dropdown with unique names from the database.
+ * Note: This filter shows names *from the data*, not the fixed input options.
+ */
 function updateNameFilter() {
     const nameFilterSelect = document.getElementById('nameFilter');
     // Get unique names from the *current* list of allMovies
@@ -161,6 +195,7 @@ function updateNameFilter() {
         nameFilterSelect.appendChild(option);
     });
 
+    // Re-apply the selection if it still exists
     nameFilterSelect.value = currentSelection;
 }
 
