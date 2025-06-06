@@ -1,29 +1,67 @@
 // 1. Supabase Initialization
 // REPLACE WITH YOUR ACTUAL SUPABASE URL AND ANON KEY
-const SUPABASE_URL = 'https://zwboslsunhrynvgrqtav.supabase.co'; // e.g., https://your-project-ref.supabase.co
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3Ym9zbHN1bmhyeW52Z3JxdGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMTE4NTEsImV4cCI6MjA2NDc4Nzg1MX0.0UopuPQCkHxE-uQArN78lcV1ead4pc1sTIe5lkWyD4w'; // e.g., eyJhbGciOiJIUzI1Ni...
+const SUPABASE_URL = 'https://zwboslsunhrynvgrqtav.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3Ym9zbHN1bmhyeW52Z3JxdGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMTE4NTEsImV4cCI6MjA2NDc4Nzg1MX0.0UopuPQCkHxE-uQArN78lcV1ead4pc1sTIe5lkWyD4w';
 
-// Declare supabase variable but initialize it inside DOMContentLoaded
-// This ensures Supabase is defined when its methods are called
-let supabase; // Change const to let initially
+// Global variable to hold the Supabase client
+let supabase;
 
 // Global variable to hold movies once fetched and for filtering
 let allMovies = [];
 
 // --- Event Listeners and Initial Load ---
 document.addEventListener('DOMContentLoaded', () => {
-    // THIS IS THE CRUCIAL CHANGE: Initialize Supabase client here
-    // This ensures that the Supabase SDK has been loaded and 'Supabase' is defined.
-    supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('Supabase client initialized.');
-
-    // Start listening for real-time changes on page load
-    setupRealtimeListener();
-    // Also fetch movies once initially to populate the timeline and filters
-    fetchMovies();
+    // Wait a moment for the Supabase library to be fully loaded
+    setTimeout(() => {
+        initializeSupabase();
+    }, 100);
 });
 
-// The rest of your script.js code remains the same:
+function initializeSupabase() {
+    try {
+        // Check if Supabase is available
+        if (typeof window.supabase === 'undefined') {
+            console.error('Supabase library not loaded. Trying alternative access...');
+            
+            // Try alternative ways to access Supabase
+            if (typeof supabase !== 'undefined') {
+                // Global supabase variable
+                window.supabase = supabase;
+            } else if (typeof window.Supabase !== 'undefined') {
+                // Capital S Supabase
+                window.supabase = window.Supabase;
+            } else {
+                throw new Error('Supabase library is not available');
+            }
+        }
+
+        // Initialize Supabase client
+        const { createClient } = window.supabase;
+        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        console.log('Supabase client initialized successfully.');
+
+        // Start listening for real-time changes on page load
+        setupRealtimeListener();
+        // Also fetch movies once initially to populate the timeline and filters
+        fetchMovies();
+        
+    } catch (error) {
+        console.error('Failed to initialize Supabase:', error);
+        
+        // Show user-friendly error message
+        const timeline = document.getElementById('timeline');
+        timeline.innerHTML = `
+            <div style="color: red; text-align: center; padding: 20px; border: 1px solid #ffcccb; border-radius: 8px; background-color: #ffe6e6;">
+                <h4>⚠️ Connection Error</h4>
+                <p>Unable to connect to the database. Please refresh the page and try again.</p>
+                <p><small>Error: ${error.message}</small></p>
+                <button onclick="location.reload()" style="margin-top: 10px;">Refresh Page</button>
+            </div>
+        `;
+    }
+}
+
 // --- New Function to Handle Name Dropdown Change ---
 /**
  * Shows/hides the "other name" input field based on the selected name.
@@ -34,11 +72,11 @@ function handleNameChange() {
     const otherNameInput = document.getElementById('otherNameInput');
 
     if (nameInput.value === 'OTHERS') {
-        otherNameContainer.style.display = 'block'; // Show the text field
-        otherNameInput.focus(); // Focus on it for immediate typing
+        otherNameContainer.style.display = 'block';
+        otherNameInput.focus();
     } else {
-        otherNameContainer.style.display = 'none'; // Hide the text field
-        otherNameInput.value = ''; // Clear its value when hidden
+        otherNameContainer.style.display = 'none';
+        otherNameInput.value = '';
     }
 }
 
@@ -48,44 +86,61 @@ function handleNameChange() {
  * Fetches all movies from Supabase and updates the timeline.
  */
 async function fetchMovies() {
-    console.log('Fetching movies from Supabase...');
-    const { data, error } = await supabase
-        .from('movies')
-        .select('*') // Select all columns (including the new 'review')
-        .order('created_at', { ascending: false }); // Order by newest first
-
-    if (error) {
-        console.error('Error fetching movies:', error.message);
-        document.getElementById('timeline').innerHTML = '<p style="color: red;">Error loading movies. Please try again.</p>';
+    if (!supabase) {
+        console.error('Supabase client not initialized');
         return;
     }
 
-    allMovies = data || []; // Store fetched movies
-    console.log('Movies fetched:', allMovies);
-    renderTimeline(); // Re-render the timeline with fetched data
-    updateNameFilter(); // Update name filter based on fetched data
+    console.log('Fetching movies from Supabase...');
+    
+    try {
+        const { data, error } = await supabase
+            .from('movies')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            throw error;
+        }
+
+        allMovies = data || [];
+        console.log('Movies fetched:', allMovies);
+        renderTimeline();
+        updateNameFilter();
+        
+    } catch (error) {
+        console.error('Error fetching movies:', error.message);
+        document.getElementById('timeline').innerHTML = `
+            <p style="color: red;">Error loading movies: ${error.message}</p>
+            <button onclick="fetchMovies()">Try Again</button>
+        `;
+    }
 }
 
 /**
  * Adds a new movie entry to the Supabase database.
  */
 async function addMovie() {
+    if (!supabase) {
+        alert('Database connection not available. Please refresh the page.');
+        return;
+    }
+
     console.log('addMovie function called.');
-    const nameInputSelect = document.getElementById('nameInput'); // This is now the select element
-    const otherNameInput = document.getElementById('otherNameInput'); // The input for "OTHERS"
+    const nameInputSelect = document.getElementById('nameInput');
+    const otherNameInput = document.getElementById('otherNameInput');
     const movieInput = document.getElementById('movieInput');
     const ratingInput = document.getElementById('ratingInput');
-    const reviewInput = document.getElementById('reviewInput'); // New review input
+    const reviewInput = document.getElementById('reviewInput');
 
     let name = nameInputSelect.value;
-    // If "OTHERS" is selected, use the text from the otherNameInput
     if (name === 'OTHERS') {
         name = otherNameInput.value.trim();
     }
 
-    const movie_title = movieInput.value.trim(); // Match database column name
-    const rating = parseInt(ratingInput.value); // Ensure rating is an integer
-    const review = reviewInput.value.trim(); // Get the review text
+    const movie_title = movieInput.value.trim();
+    const rating = parseInt(ratingInput.value);
+    const review = reviewInput.value.trim();
 
     console.log('Input values:', { name, movie_title, rating, review });
 
@@ -101,82 +156,96 @@ async function addMovie() {
     }
 
     console.log('Validation passed. Attempting to insert into Supabase...');
-    const { data, error } = await supabase // Accessing 'supabase' here
-        .from('movies')
-        .insert([
-            { name, movie_title, rating, review } // Include the new 'review' field
-        ]);
+    
+    try {
+        const { data, error } = await supabase
+            .from('movies')
+            .insert([
+                { name, movie_title, rating, review }
+            ]);
 
-    if (error) {
-        console.error('Error adding movie to Supabase:', error.message, error.details, error.hint, error.code);
-        alert(`Failed to add movie: ${error.message}. Please check your Supabase rules and console for details.`);
-        return;
+        if (error) {
+            throw error;
+        }
+
+        console.log('Movie added successfully to Supabase:', data);
+
+        // Clear input fields and reset dropdowns
+        nameInputSelect.value = '';
+        nameInputSelect.selectedIndex = 0;
+        otherNameInput.value = '';
+        document.getElementById('otherNameContainer').style.display = 'none';
+        movieInput.value = '';
+        ratingInput.value = '';
+        ratingInput.selectedIndex = 0;
+        reviewInput.value = '';
+        console.log('Input fields cleared.');
+        
+    } catch (error) {
+        console.error('Error adding movie to Supabase:', error.message);
+        alert(`Failed to add movie: ${error.message}. Please try again.`);
     }
-
-    console.log('Movie added successfully to Supabase:', data);
-    // Real-time listener will handle re-rendering, no need to call fetchMovies() here.
-
-    // Clear input fields and reset dropdowns
-    nameInputSelect.value = ''; // Reset name dropdown
-    nameInputSelect.selectedIndex = 0; // Ensures "Select your name" is shown
-    otherNameInput.value = ''; // Clear "OTHERS" input
-    document.getElementById('otherNameContainer').style.display = 'none'; // Hide "OTHERS" input
-    movieInput.value = '';
-    ratingInput.value = ''; // Clears the value
-    ratingInput.selectedIndex = 0; // Resets select to default option
-    reviewInput.value = ''; // Clear review text
-    console.log('Input fields cleared.');
 }
 
 /**
  * Sets up a real-time listener for changes in the 'movies' table.
- * Any insert, update, or delete will trigger a re-fetch.
  */
 function setupRealtimeListener() {
-    supabase // Accessing 'supabase' here
-        .channel('public:movies') // Listen to changes in the 'movies' table
-        .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'movies' },
-            (payload) => {
-                console.log('Realtime change detected:', payload);
-                // When a change occurs (insert, update, delete), re-fetch all movies
-                // This keeps `allMovies` array and the UI in sync.
-                fetchMovies();
-            }
-        )
-        .subscribe(); // Don't forget to subscribe!
-    console.log('Supabase real-time listener set up.');
+    if (!supabase) {
+        console.error('Cannot setup realtime listener: Supabase client not initialized');
+        return;
+    }
+
+    try {
+        supabase
+            .channel('public:movies')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'movies' },
+                (payload) => {
+                    console.log('Realtime change detected:', payload);
+                    fetchMovies();
+                }
+            )
+            .subscribe();
+        console.log('Supabase real-time listener set up.');
+    } catch (error) {
+        console.error('Error setting up realtime listener:', error);
+    }
 }
 
 /**
  * Deletes a movie entry from the Supabase database.
- * @param {string} id - The unique ID of the movie to delete.
  */
 async function deleteMovie(id) {
-    // Use a custom modal for confirmation instead of alert/confirm
+    if (!supabase) {
+        alert('Database connection not available. Please refresh the page.');
+        return;
+    }
+
     showConfirmationModal('Are you sure you want to delete this movie entry?', async () => {
         console.log('Attempting to delete movie with ID:', id);
-        const { error } = await supabase // Accessing 'supabase' here
-            .from('movies')
-            .delete()
-            .eq('id', id); // Delete where the 'id' column matches the provided ID
+        
+        try {
+            const { error } = await supabase
+                .from('movies')
+                .delete()
+                .eq('id', id);
 
-        if (error) {
-            console.error('Error deleting movie:', error.message);
-            alert('Failed to delete movie. Please try again.'); // Using alert for simplicity here, but a custom modal is better
-        } else {
+            if (error) {
+                throw error;
+            }
+
             console.log('Movie deleted successfully:', id);
-            // Real-time listener will handle re-rendering.
+        } catch (error) {
+            console.error('Error deleting movie:', error.message);
+            alert(`Failed to delete movie: ${error.message}`);
         }
     });
 }
 
-// --- Custom Modal for Confirmation (replaces confirm()) ---
-// This is a basic implementation. For a more robust solution, you'd create
-// dedicated HTML/CSS for the modal.
+// --- Custom Modal for Confirmation ---
 function showConfirmationModal(message, onConfirm) {
-    // Check if a modal already exists to prevent duplicates
     if (document.getElementById('customConfirmationModal')) {
         return;
     }
@@ -242,16 +311,14 @@ function showConfirmationModal(message, onConfirm) {
     document.body.appendChild(modalOverlay);
 }
 
-
 // --- Rendering and Filtering Functions ---
 
 function renderTimeline() {
     const timelineContainer = document.getElementById('timeline');
-
     const nameFilter = document.getElementById('nameFilter').value;
     const ratingFilter = document.getElementById('ratingFilter').value;
 
-    let filteredMovies = allMovies; // Use the globally stored movies
+    let filteredMovies = allMovies;
 
     if (nameFilter !== 'all') {
         filteredMovies = filteredMovies.filter(movie => movie.name === nameFilter);
@@ -266,14 +333,16 @@ function renderTimeline() {
         return;
     }
 
-    timelineContainer.innerHTML = ''; // Clear the timeline
+    timelineContainer.innerHTML = '';
 
     filteredMovies.forEach(movie => {
         const timelineItem = document.createElement('article');
         timelineItem.classList.add('timeline-item');
 
         const ratingStars = '★'.repeat(movie.rating) + '☆'.repeat(5 - movie.rating);
-        const formattedDate = movie.created_at ? new Date(movie.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown Date';
+        const formattedDate = movie.created_at 
+            ? new Date(movie.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) 
+            : 'Unknown Date';
 
         timelineItem.innerHTML = `
             <h4>${movie.movie_title}</h4>
@@ -288,16 +357,13 @@ function renderTimeline() {
 
 /**
  * Populates the name filter dropdown with unique names from the database.
- * Note: This filter shows names *from the data*, not the fixed input options.
  */
 function updateNameFilter() {
     const nameFilterSelect = document.getElementById('nameFilter');
-    // Get unique names from the *current* list of allMovies
     const names = [...new Set(allMovies.map(movie => movie.name))];
-
     const currentSelection = nameFilterSelect.value;
 
-    nameFilterSelect.innerHTML = '<option value="all">All</option>'; // Reset
+    nameFilterSelect.innerHTML = '<option value="all">All</option>';
 
     names.sort().forEach(name => {
         const option = document.createElement('option');
@@ -306,10 +372,9 @@ function updateNameFilter() {
         nameFilterSelect.appendChild(option);
     });
 
-    // Re-apply the selection if it still exists
     nameFilterSelect.value = currentSelection;
 }
 
 function filterTimeline() {
-    renderTimeline(); // Just re-render based on current filters and `allMovies`
+    renderTimeline();
 }
