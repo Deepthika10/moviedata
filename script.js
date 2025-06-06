@@ -3,20 +3,27 @@
 const SUPABASE_URL = 'https://zwboslsunhrynvgrqtav.supabase.co'; // e.g., https://your-project-ref.supabase.co
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3Ym9zbHN1bmhyeW52Z3JxdGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMTE4NTEsImV4cCI6MjA2NDc4Nzg1MX0.0UopuPQCkHxE-uQArN78lcV1ead4pc1sTIe5lkWyD4w'; // e.g., eyJhbGciOiJIUzI1Ni...
 
-// THIS LINE IS WHERE Supabase.createClient IS CALLED
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Declare supabase variable but initialize it inside DOMContentLoaded
+// This ensures Supabase is defined when its methods are called
+let supabase; // Change const to let initially
 
 // Global variable to hold movies once fetched and for filtering
 let allMovies = [];
 
 // --- Event Listeners and Initial Load ---
 document.addEventListener('DOMContentLoaded', () => {
+    // THIS IS THE CRUCIAL CHANGE: Initialize Supabase client here
+    // This ensures that the Supabase SDK has been loaded and 'Supabase' is defined.
+    supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase client initialized.');
+
     // Start listening for real-time changes on page load
     setupRealtimeListener();
     // Also fetch movies once initially to populate the timeline and filters
     fetchMovies();
 });
 
+// The rest of your script.js code remains the same:
 // --- New Function to Handle Name Dropdown Change ---
 /**
  * Shows/hides the "other name" input field based on the selected name.
@@ -75,7 +82,7 @@ async function addMovie() {
     if (name === 'OTHERS') {
         name = otherNameInput.value.trim();
     }
-    
+
     const movie_title = movieInput.value.trim(); // Match database column name
     const rating = parseInt(ratingInput.value); // Ensure rating is an integer
     const review = reviewInput.value.trim(); // Get the review text
@@ -240,7 +247,7 @@ function showConfirmationModal(message, onConfirm) {
 
 function renderTimeline() {
     const timelineContainer = document.getElementById('timeline');
-    
+
     const nameFilter = document.getElementById('nameFilter').value;
     const ratingFilter = document.getElementById('ratingFilter').value;
 
@@ -286,12 +293,12 @@ function renderTimeline() {
 function updateNameFilter() {
     const nameFilterSelect = document.getElementById('nameFilter');
     // Get unique names from the *current* list of allMovies
-    const names = [...new Set(allMovies.map(movie => movie.name))]; 
+    const names = [...new Set(allMovies.map(movie => movie.name))];
 
     const currentSelection = nameFilterSelect.value;
-    
+
     nameFilterSelect.innerHTML = '<option value="all">All</option>'; // Reset
-    
+
     names.sort().forEach(name => {
         const option = document.createElement('option');
         option.value = name;
