@@ -1,8 +1,6 @@
 // 1. Supabase Initialization
 // REPLACE WITH YOUR ACTUAL SUPABASE URL AND ANON KEY
-const SUPABASE_URL = 'https://zwboslsunhrynvgrqtav.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3Ym9zbHN1bmhyeW52Z3JxdGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMTE4NTEsImV4cCI6MjA2NDc4Nzg1MX0.0UopuPQCkHxE-uQArN78lcV1ead4pc1sTIe5lkWyD4w';
-
+const SUPABASE_URL =
 // Global variable to hold the Supabase client
 let supabase;
 
